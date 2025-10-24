@@ -1,0 +1,26 @@
+{
+  "name": "opinion-trade-sdk",
+  "version": "1.0.0",
+  "description": "SDK for Opinion Trade prediction market",
+  "main": "src/sdk/OpinionTradeSDK.js",
+  "type": "module",
+  "scripts": {
+    "start": "node quickstart.js",
+    "example": "node src/example.js",
+    "test": "node test_signature.js",
+    "test:topic": "node test_topic_fetch.js",
+    "order": "node place_order.js"
+  },
+  "keywords": [
+    "prediction-market",
+    "ethereum",
+    "sdk"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "^6.13.0",
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.0"
+  }
+}
