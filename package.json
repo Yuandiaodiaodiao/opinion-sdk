@@ -9,7 +9,8 @@
     "example": "node src/example.js",
     "test": "node test_signature.js",
     "test:topic": "node test_topic_fetch.js",
-    "order": "node place_order.js"
+    "order": "node place_order.js",
+    "query": "node query_orders_example.js"
   },
   "keywords": [
     "prediction-market",

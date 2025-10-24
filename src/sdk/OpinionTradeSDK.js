@@ -8,7 +8,9 @@ import {
   API_ENDPOINTS,
   Side,
   VolumeType,
-  YesOrNo
+  YesOrNo,
+  OrderQueryType,
+  OrderStatus
 } from './constants.js';
 import { buildSignedOrder } from './signer.js';
 import { buildOrderParams, buildApiPayload } from './orderBuilder.js';
@@ -375,6 +377,119 @@ export class OpinionTradeSDK {
    */
   async listCachedTopics() {
     return await this.topicAPI.listCachedTopics();
+  }
+
+  /**
+   * Query orders
+   *
+   * @param {object} params
+   * @param {string} params.walletAddress - Wallet address to query
+   * @param {number} params.queryType - Query type (1: open orders, 2: closed orders)
+   * @param {string|number} [params.topicId] - Topic ID (optional, if not provided, query all topics)
+   * @param {number} [params.page=1] - Page number
+   * @param {number} [params.limit=10] - Items per page
+   * @returns {Promise<object>} Orders response with list and total
+   */
+  async queryOrders(params) {
+    const {
+      walletAddress,
+      queryType,
+      topicId,
+      page = 1,
+      limit = 10
+    } = params;
+
+    if (!walletAddress) {
+      throw new Error('walletAddress is required');
+    }
+
+    if (!queryType || (queryType !== OrderQueryType.OPEN && queryType !== OrderQueryType.CLOSED)) {
+      throw new Error('queryType must be 1 (OPEN) or 2 (CLOSED)');
+    }
+
+    try {
+      // Build URL with query parameters
+      let url = `${this.apiBaseUrl}${API_ENDPOINTS.QUERY_ORDERS}?page=${page}&limit=${limit}&walletAddress=${walletAddress}&queryType=${queryType}`;
+
+      if (topicId) {
+        url += `&topicId=${topicId}`;
+      }
+
+      console.log('Querying orders...');
+      console.log('URL:', url);
+
+      // Build curl command with authorization
+      let curlCommand = `curl -k -s -X GET "${url}" -H "Content-Type: application/json"`;
+
+      if (this.authorizationToken) {
+        const token = this.authorizationToken.startsWith('Bearer ')
+          ? this.authorizationToken
+          : `Bearer ${this.authorizationToken}`;
+        curlCommand += ` -H "Authorization: ${token}"`;
+      } else {
+        console.warn('⚠️  WARNING: No authorization token provided. API call may fail.');
+      }
+
+      const { stdout, stderr } = await execPromise(curlCommand, {
+        timeout: 30000,
+        maxBuffer: 1024 * 1024 * 10
+      });
+
+      if (stderr) {
+        console.error('curl stderr:', stderr);
+      }
+
+      const responseData = JSON.parse(stdout);
+
+      if (responseData.errno !== undefined && responseData.errno !== 0) {
+        throw new Error(`API error (errno: ${responseData.errno}): ${responseData.errmsg || 'Unknown error'}`);
+      }
+
+      console.log(`✓ Found ${responseData.result.total} order(s), showing ${responseData.result.list.length}`);
+
+      return responseData.result;
+    } catch (error) {
+      console.error('Query orders error:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Get open orders (未完成订单)
+   *
+   * @param {object} params
+   * @param {string} [params.walletAddress] - Wallet address (default: maker address)
+   * @param {string|number} [params.topicId] - Topic ID (optional)
+   * @param {number} [params.page=1] - Page number
+   * @param {number} [params.limit=10] - Items per page
+   * @returns {Promise<object>} Orders response with list and total
+   */
+  async getOpenOrders(params = {}) {
+    const walletAddress = params.walletAddress || this.makerAddress;
+    return this.queryOrders({
+      ...params,
+      walletAddress,
+      queryType: OrderQueryType.OPEN
+    });
+  }
+
+  /**
+   * Get closed orders (已完成/取消订单)
+   *
+   * @param {object} params
+   * @param {string} [params.walletAddress] - Wallet address (default: maker address)
+   * @param {string|number} [params.topicId] - Topic ID (optional)
+   * @param {number} [params.page=1] - Page number
+   * @param {number} [params.limit=10] - Items per page
+   * @returns {Promise<object>} Orders response with list and total
+   */
+  async getClosedOrders(params = {}) {
+    const walletAddress = params.walletAddress || this.makerAddress;
+    return this.queryOrders({
+      ...params,
+      walletAddress,
+      queryType: OrderQueryType.CLOSED
+    });
   }
 }
 

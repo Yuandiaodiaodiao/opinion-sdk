@@ -15,7 +15,8 @@ export const COLLATERAL_TOKEN_DECIMAL = 18;
 // API configuration
 export const API_BASE_URL = 'https://proxy.opinion.trade:8443/api/bsc/api';
 export const API_ENDPOINTS = {
-  SUBMIT_ORDER: '/v2/order'
+  SUBMIT_ORDER: '/v2/order',
+  QUERY_ORDERS: '/v2/order'
 };
 
 // EIP-712 Domain
@@ -81,3 +82,16 @@ export const YesOrNo = {
 
 // Zero address
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+// Order query types
+export const OrderQueryType = {
+  OPEN: 1,      // 未完成订单
+  CLOSED: 2     // 已完成/取消订单
+};
+
+// Order status
+export const OrderStatus = {
+  OPEN: 1,         // 未完成
+  FILLED: 2,       // 已完成
+  CANCELLED: 3     // 已取消
+};

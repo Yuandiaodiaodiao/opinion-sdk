@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opinion Trade SDK 完整教程 - EIP-712 签名详解</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        nav a {
+            color: #2a5298;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            background: #2a5298;
+            color: white;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        section {
+            margin-bottom: 50px;
+        }
+
+        h2 {
+            color: #1e3c72;
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #2a5298;
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #495057;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2a5298;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            color: #e83e8c;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #abb2bf;
+        }
+
+        .code-header {
+            background: #1e2127;
+            color: #61afef;
+            padding: 10px 20px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            margin-bottom: -15px;
+            margin-top: 15px;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background: #2a5298;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .flow-diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .step {
+            background: white;
+            border: 2px solid #2a5298;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px auto;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .step::after {
+            content: '↓';
+            display: block;
+            text-align: center;
+            font-size: 24px;
+            color: #2a5298;
+            margin-top: 10px;
+        }
+
+        .step:last-child::after {
+            content: '';
+        }
+
+        .step-number {
+            background: #2a5298;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        footer {
+            background: #1e3c72;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        .highlight-keyword {
+            color: #c678dd;
+        }
+
+        .highlight-string {
+            color: #98c379;
+        }
+
+        .highlight-number {
+            color: #d19a66;
+        }
+
+        .highlight-comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .toc li {
+            margin-bottom: 5px;
+        }
+
+        .toc a {
+            color: #2a5298;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Opinion Trade SDK 完整教程</h1>
+            <p>基于 BSC 的预测市场限价订单 SDK - EIP-712 签名详解</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">概述</a></li>
+                <li><a href="#eip712">EIP-712 签名原理</a></li>
+                <li><a href="#architecture">架构设计</a></li>
+                <li><a href="#source-code">完整源码</a></li>
+                <li><a href="#usage">使用示例</a></li>
+                <li><a href="#api">API 参考</a></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <!-- 概述 -->
+            <section id="overview">
+                <h2>1. SDK 概述</h2>
+
+                <div class="info-box">
+                    <strong>项目简介：</strong>Opinion Trade SDK 是一个用于与 BSC (币安智能链) 上的预测市场交互的 JavaScript SDK。它支持创建、签名和提交限价订单，专为 Gnosis Safe 多签钱包设计。
+                </div>
+
+                <h3>核心特性</h3>
+                <ul>
+                    <li><strong>Gnosis Safe 集成：</strong>支持多签钱包，owner 代表 Safe 地址签名</li>
+                    <li><strong>EIP-712 签名：</strong>使用标准化的结构化数据签名</li>
+                    <li><strong>Topic 缓存：</strong>本地缓存 topic 信息，减少 API 调用</li>
+                    <li><strong>高精度计算：</strong>使用 BigInt 避免浮点数精度问题</li>
+                    <li><strong>订单查询：</strong>支持查询未完成和已完成订单</li>
+                    <li><strong>价格转换：</strong>自动处理用户价格 (0-100) 到 API 价格 (0.000-1.000) 的转换</li>
+                </ul>
+
+                <h3>技术栈</h3>
+                <ul>
+                    <li><strong>Ethers.js v6：</strong>用于钱包管理和 EIP-712 签名</li>
+                    <li><strong>Node.js：</strong>ES6 模块化</li>
+                    <li><strong>curl：</strong>通过 child_process 发送 HTTP 请求</li>
+                    <li><strong>文件系统缓存：</strong>本地 JSON 文件缓存</li>
+                </ul>
+
+                <h3>链上配置</h3>
+                <table>
+                    <tr>
+                        <th>参数</th>
+                        <th>值</th>
+                        <th>说明</th>
+                    </tr>
+                    <tr>
+                        <td>Chain ID</td>
+                        <td>56</td>
+                        <td>BSC 主网</td>
+                    </tr>
+                    <tr>
+                        <td>Exchange 合约</td>
+                        <td>0x5F45344126D6488025B0b84A3A8189F2487a7246</td>
+                        <td>订单簿合约</td>
+                    </tr>
+                    <tr>
+                        <td>Collateral Token</td>
+                        <td>0x55d398326f99059fF775485246999027B3197955</td>
+                        <td>USDT (18 decimals)</td>
+                    </tr>
+                    <tr>
+                        <td>API Base URL</td>
+                        <td>https://proxy.opinion.trade:8443/api/bsc/api</td>
+                        <td>后端 API</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- EIP-712 签名原理 -->
+            <section id="eip712">
+                <h2>2. EIP-712 签名原理详解</h2>
+
+                <h3>2.1 什么是 EIP-712？</h3>
+                <p>
+                    EIP-712 是以太坊改进提案，定义了一种对结构化数据进行哈希和签名的标准方法。与传统的 <code>eth_sign</code> 相比，EIP-712 提供了：
+                </p>
+                <ul>
+                    <li>更好的用户体验：钱包可以向用户展示人类可读的数据</li>
+                    <li>更高的安全性：防止签名数据被重放到其他合约或链上</li>
+                    <li>类型安全：确保数据结构的完整性</li>
+                </ul>
+
+                <h3>2.2 EIP-712 签名结构</h3>
+                <p>EIP-712 签名由三部分组成：</p>
+
+                <div class="code-header">EIP-712 签名组成</div>
+                <pre><code>签名 = sign(keccak256("\x19\x01" || domainSeparator || structHash))</code></pre>
+
+                <h4>① Domain Separator（域分隔符）</h4>
+                <p>用于防止签名在不同应用之间重放：</p>
+
+                <div class="code-header">constants.js - Domain 定义</div>
+                <pre><code>export const EIP712_DOMAIN = {
+  name: 'OPINION CTF Exchange',     // 应用名称
+  version: '1',                      // 版本号
+  chainId: '56',                     // BSC Chain ID
+  verifyingContract: '0x5f45344126d6488025b0b84a3a8189f2487a7246'  // Exchange 合约地址
+};</code></pre>
+
+                <div class="info-box">
+                    <strong>为什么需要 Domain？</strong><br>
+                    Domain 确保签名只在特定的链（BSC）和特定的合约上有效。即使相同的订单数据，在以太坊主网或其他合约上的签名也会完全不同。
+                </div>
+
+                <h4>② Type Definition（类型定义）</h4>
+                <p>定义订单结构的每个字段及其类型：</p>
+
+                <div class="code-header">constants.js - Order 类型定义</div>
+                <pre><code>export const EIP712_TYPES = {
+  Order: [
+    { name: 'salt', type: 'uint256' },           // 订单唯一标识（时间戳）
+    { name: 'maker', type: 'address' },          // Maker 地址（Gnosis Safe）
+    { name: 'signer', type: 'address' },         // 签名者地址（Safe Owner）
+    { name: 'taker', type: 'address' },          // Taker 地址（0x0 表示任何人）
+    { name: 'tokenId', type: 'uint256' },        // Token ID（YES/NO position）
+    { name: 'makerAmount', type: 'uint256' },    // Maker 提供的数量
+    { name: 'takerAmount', type: 'uint256' },    // Taker 需要的数量
+    { name: 'expiration', type: 'uint256' },     // 过期时间（0 = 永不过期）
+    { name: 'nonce', type: 'uint256' },          // Nonce（当前为 0）
+    { name: 'feeRateBps', type: 'uint256' },     // 手续费率（bps）
+    { name: 'side', type: 'uint8' },             // 订单方向（0=BUY, 1=SELL）
+    { name: 'signatureType', type: 'uint8' }     // 签名类型（2=Gnosis Safe）
+  ]
+};</code></pre>
+
+                <h4>③ Order Data（订单数据）</h4>
+                <p>实际的订单参数值：</p>
+
+                <div class="code-header">signer.js - 创建订单</div>
+                <pre><code>export function createOrder(params) {
+  const {
+    maker,          // 0x1234...（Gnosis Safe 地址）
+    signer,         // 0x5678...（Safe Owner 地址）
+    tokenId,        // "12345"（YES/NO token ID）
+    makerAmount,    // "1000000000000000000"（1 USDT in wei）
+    takerAmount,    // "1000000000000000000"（1 share in wei）
+    side,           // 0 (BUY)
+    expiration = '0',
+    feeRateBps = '0'
+  } = params;
+
+  const salt = Date.now().toString();  // 使用当前时间戳作为 salt
+
+  const order = {
+    salt,
+    maker: maker.toLowerCase(),
+    signer: signer.toLowerCase(),
+    taker: '0x0000000000000000000000000000000000000000',  // 任何人可成交
+    tokenId,
+    makerAmount,
+    takerAmount,
+    expiration,
+    nonce: '0',
+    feeRateBps,
+    side,
+    signatureType: 2  // Gnosis Safe 类型
+  };
+
+  return order;
+}</code></pre>
+
+                <h3>2.3 签名流程</h3>
+
+                <div class="flow-diagram">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <strong>构建订单对象</strong><br>
+                        根据用户输入（topic、price、shares）计算 makerAmount 和 takerAmount
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <strong>计算 Domain Separator</strong><br>
+                        domainSeparator = keccak256(encodeData(EIP712_DOMAIN))
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <strong>计算 Struct Hash</strong><br>
+                        structHash = keccak256(encodeData(order))
+                    </div>
+                    <div class="step">
+                        <span class="step-number">4</span>
+                        <strong>生成签名消息</strong><br>
+                        message = "\x19\x01" || domainSeparator || structHash
+                    </div>
+                    <div class="step">
+                        <span class="step-number">5</span>
+                        <strong>ECDSA 签名</strong><br>
+                        signature = wallet.signTypedData(domain, types, order)<br>
+                        返回 65 字节签名 (r: 32 bytes, s: 32 bytes, v: 1 byte)
+                    </div>
+                </div>
+
+                <h3>2.4 签名实现代码</h3>
+
+                <div class="code-header">signer.js - 签名函数</div>
+                <pre><code>export async function signOrder(wallet, order) {
+  try {
+    // 使用 ethers.js 的 signTypedData 方法
+    // 它会自动计算 domainSeparator 和 structHash
+    const signature = await wallet.signTypedData(
+      EIP712_DOMAIN,                    // Domain
+      { Order: EIP712_TYPES.Order },    // Types
+      order                             // Order data
+    );
+
+    // 返回带签名的订单
+    // signature 格式: 0x[r][s][v] (65 bytes)
+    return {
+      ...order,
+      signature  // 例如: "0x1234...abcd" (132 hex chars = 66 bytes with 0x)
+    };
+  } catch (error) {
+    throw new Error(`Failed to sign order: ${error.message}`);
+  }
+}</code></pre>
+
+                <h3>2.5 Gnosis Safe 签名特殊处理</h3>
+
+                <div class="warning-box">
+                    <strong>重要：</strong>本 SDK 中，虽然订单的 <code>signatureType</code> 设置为 2（Gnosis Safe），但实际提交到 API 的签名是<strong>标准的 65 字节 ECDSA 签名</strong>，而不是 Gnosis Safe 编码格式（address + signature）。
+                </div>
+
+                <p>Gnosis Safe 签名编码格式（<strong>本 SDK 未使用</strong>）：</p>
+                <div class="code-header">utils.js - Gnosis Safe 签名编码（仅供参考）</div>
+                <pre><code>export function encodeGnosisSafeSignature(signer, signature) {
+  // Gnosis Safe 格式: [signer address (20 bytes)][signature (65 bytes)]
+  const cleanSignature = signature.startsWith('0x') ? signature.slice(2) : signature;
+  const cleanSigner = signer.toLowerCase().startsWith('0x') ? signer.slice(2) : signer;
+
+  return '0x' + cleanSigner.toLowerCase() + cleanSignature;
+  // 结果: "0x[20 bytes address][65 bytes signature]" = 170 hex chars
+}</code></pre>
+
+                <h3>2.6 签名验证（合约端）</h3>
+                <p>虽然我们不需要实现验证逻辑，但了解合约如何验证签名很重要：</p>
+
+                <div class="code-header">合约端验证流程（Solidity 伪代码）</div>
+                <pre><code>function validateOrder(Order memory order, bytes memory signature) public view returns (bool) {
+    // 1. 重构 EIP-712 消息
+    bytes32 domainSeparator = keccak256(abi.encode(
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+        keccak256("OPINION CTF Exchange"),
+        keccak256("1"),
+        56,
+        address(this)
+    ));
+
+    bytes32 structHash = keccak256(abi.encode(
+        ORDER_TYPEHASH,
+        order.salt,
+        order.maker,
+        order.signer,
+        order.taker,
+        order.tokenId,
+        order.makerAmount,
+        order.takerAmount,
+        order.expiration,
+        order.nonce,
+        order.feeRateBps,
+        order.side,
+        order.signatureType
+    ));
+
+    bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+
+    // 2. 恢复签名者地址
+    address recovered = ecrecover(digest, v, r, s);
+
+    // 3. 验证签名者
+    if (order.signatureType == 2) {  // Gnosis Safe
+        // 验证 recovered 地址是否是 Gnosis Safe 的 owner
+        require(GnosisSafe(order.maker).isOwner(recovered), "Invalid signer");
+    }
+
+    return true;
+}</code></pre>
+
+                <div class="success-box">
+                    <strong>签名安全性总结：</strong>
+                    <ul>
+                        <li>Domain Separator 防止跨链/跨合约重放</li>
+                        <li>Salt（时间戳）确保每个订单唯一</li>
+                        <li>Signer 字段明确签名者身份</li>
+                        <li>合约验证签名者是 Gnosis Safe 的 owner</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 架构设计 -->
+            <section id="architecture">
+                <h2>3. SDK 架构设计</h2>
+
+                <h3>3.1 模块划分</h3>
+                <table>
+                    <tr>
+                        <th>模块</th>
+                        <th>文件</th>
+                        <th>职责</th>
+                    </tr>
+                    <tr>
+                        <td>常量配置</td>
+                        <td>constants.js</td>
+                        <td>定义链配置、合约地址、EIP-712 结构、枚举值</td>
+                    </tr>
+                    <tr>
+                        <td>工具函数</td>
+                        <td>utils.js</td>
+                        <td>金额转换、BigInt 计算、地址验证</td>
+                    </tr>
+                    <tr>
+                        <td>签名模块</td>
+                        <td>signer.js</td>
+                        <td>创建订单对象、EIP-712 签名</td>
+                    </tr>
+                    <tr>
+                        <td>订单构建</td>
+                        <td>orderBuilder.js</td>
+                        <td>参数验证、金额计算、API 载荷构建</td>
+                    </tr>
+                    <tr>
+                        <td>Topic API</td>
+                        <td>TopicAPI.js</td>
+                        <td>Topic 信息获取、本地缓存管理</td>
+                    </tr>
+                    <tr>
+                        <td>主 SDK</td>
+                        <td>OpinionTradeSDK.js</td>
+                        <td>对外 API、订单提交、订单查询</td>
+                    </tr>
+                </table>
+
+                <h3>3.2 订单创建流程</h3>
+
+                <div class="flow-diagram">
+                    <div class="step">
+                        <strong>用户输入</strong><br>
+                        topicId, position(YES/NO), limitPrice(0-100), shares, side(BUY/SELL)
+                    </div>
+                    <div class="step">
+                        <strong>Topic 解析</strong><br>
+                        TopicAPI.getTopicInfo() → 从缓存或 API 获取 tokenId
+                    </div>
+                    <div class="step">
+                        <strong>参数构建</strong><br>
+                        buildOrderParams() → 计算 makerAmount/takerAmount (使用 BigInt)
+                    </div>
+                    <div class="step">
+                        <strong>订单签名</strong><br>
+                        buildSignedOrder() → EIP-712 签名
+                    </div>
+                    <div class="step">
+                        <strong>API 载荷</strong><br>
+                        buildApiPayload() → 价格转换 (0-100 → 0.000-1.000)
+                    </div>
+                    <div class="step">
+                        <strong>提交订单</strong><br>
+                        submitOrder() → curl POST 到 API
+                    </div>
+                </div>
+
+                <h3>3.3 金额计算详解</h3>
+
+                <h4>BUY vs SELL 的 makerAmount/takerAmount</h4>
+                <table>
+                    <tr>
+                        <th>Side</th>
+                        <th>makerAmount</th>
+                        <th>takerAmount</th>
+                        <th>含义</th>
+                    </tr>
+                    <tr>
+                        <td>BUY (0)</td>
+                        <td>USDT 数量</td>
+                        <td>Shares 数量</td>
+                        <td>Maker 提供 USDT，换取 Shares</td>
+                    </tr>
+                    <tr>
+                        <td>SELL (1)</td>
+                        <td>Shares 数量</td>
+                        <td>USDT 数量</td>
+                        <td>Maker 提供 Shares，换取 USDT</td>
+                    </tr>
+                </table>
+
+                <h4>计算公式（使用 BigInt 避免精度问题）</h4>
+                <div class="code-header">utils.js - 高精度金额计算</div>
+                <pre><code>function calculateAmountWithBigInt(shares, price) {
+  // 示例: shares = "10.5", price = "99.1"
+
+  // 1. 解析 shares: "10.5" → sharesInt="10", sharesDec="5" (1位小数)
+  const sharesParts = shares.toString().split('.');
+  const sharesInt = sharesParts[0] || '0';
+  const sharesDec = sharesParts[1] || '';
+
+  // 2. 解析 price: "99.1" → priceInt="99", priceDec="1" (1位小数)
+  const priceParts = price.toString().split('.');
+  const priceInt = priceParts[0] || '0';
+  const priceDec = priceParts[1] || '';
+
+  // 3. 转换为 BigInt (去掉小数点)
+  //    shares: 10.5 → 105n (sharesDecPlaces=1)
+  //    price: 99.1 → 991n (priceDecPlaces=1)
+  const sharesDecPlaces = sharesDec.length;
+  const priceDecPlaces = priceDec.length;
+  const totalDecPlaces = sharesDecPlaces + priceDecPlaces;  // 1 + 1 = 2
+
+  const sharesBigInt = BigInt(sharesInt + sharesDec.padEnd(sharesDecPlaces, '0'));  // 105n
+  const priceBigInt = BigInt(priceInt + priceDec.padEnd(priceDecPlaces, '0'));      // 991n
+
+  // 4. 相乘: 105 * 991 = 104055
+  const product = sharesBigInt * priceBigInt;  // 104055n
+
+  // 5. 除以 100 并调整小数位
+  //    需要除以: 100 * 10^totalDecPlaces = 100 * 10^2 = 10000
+  //    但我们要保留 18 位小数，所以先乘以 10^18
+  //    结果 = (product * 10^18) / (100 * 10^totalDecPlaces)
+  const divisor = BigInt(100) * (10n ** BigInt(totalDecPlaces));  // 10000n
+  const resultScaled = (product * (10n ** 18n)) / divisor;
+  //    = (104055 * 10^18) / 10000
+  //    = 10405500000000000000n (10.4055 in wei)
+
+  // 6. 转换为字符串，保留 18 位小数
+  const resultStr = resultScaled.toString().padStart(19, '0');
+  const resultInt = resultStr.slice(0, -18) || '0';     // "10"
+  const resultDec = resultStr.slice(-18);                // "405500000000000000"
+
+  // 7. 去掉末尾的 0
+  const trimmedDec = resultDec.replace(/0+$/, '');      // "4055"
+
+  if (trimmedDec === '') {
+    return resultInt;  // "10"
+  }
+  return resultInt + '.' + trimmedDec;  // "10.4055"
+}</code></pre>
+
+                <div class="info-box">
+                    <strong>为什么使用 BigInt？</strong><br>
+                    JavaScript 的 Number 类型使用双精度浮点数，在金融计算中会产生精度误差。例如：<br>
+                    <code>0.1 + 0.2 = 0.30000000000000004</code><br>
+                    使用 BigInt 进行整数运算可以完全避免这个问题。
+                </div>
+
+                <h3>3.4 价格转换逻辑</h3>
+
+                <h4>用户价格 → API 价格</h4>
+                <p>用户输入的价格范围是 0-100（代表百分比），但 API 需要的是 0.000-1.000 的小数格式。</p>
+
+                <div class="code-header">orderBuilder.js - 价格转换</div>
+                <pre><code>function formatPriceWithBigInt(limitPrice) {
+  // 示例: limitPrice = "99.1"
+
+  // 1. 解析价格
+  const parts = limitPrice.toString().split('.');
+  const integerPart = parts[0] || '0';           // "99"
+  const decimalPart = (parts[1] || '0').padEnd(2, '0');  // "10"
+
+  // 2. 转换为整数: 99.1 → 9910 (保留2位小数)
+  const fullInteger = integerPart + decimalPart;  // "9910"
+  const bigIntValue = BigInt(fullInteger);        // 9910n
+
+  // 3. 计算: (bigIntValue * 1000) / 10000
+  //    这相当于: (99.1 * 10) / 1000 = 0.991
+  const resultTimes1000 = bigIntValue * 1000n / 10000n;  // 991n
+
+  // 4. 格式化为小数（3位小数）
+  const resultStr = resultTimes1000.toString().padStart(4, '0');  // "0991"
+  const resultInt = resultStr.slice(0, -3) || '0';  // "0"
+  const resultDec = resultStr.slice(-3);            // "991"
+
+  return resultInt + '.' + resultDec;  // "0.991"
+}
+
+// 示例:
+formatPriceWithBigInt("99.1")  // → "0.991"
+formatPriceWithBigInt("50")    // → "0.500"
+formatPriceWithBigInt("0.5")   // → "0.005"</code></pre>
+
+                <h3>3.5 Topic 缓存机制</h3>
+
+                <p>为了减少 API 调用和提高响应速度，SDK 实现了本地文件缓存。</p>
+
+                <h4>缓存策略</h4>
+                <ul>
+                    <li><strong>缓存位置：</strong><code>.cache/topics/topic_{topicId}.json</code></li>
+                    <li><strong>缓存有效期：</strong>24 小时</li>
+                    <li><strong>缓存内容：</strong>Topic 信息（title, yesToken, noToken, prices 等）</li>
+                    <li><strong>强制刷新：</strong>通过 <code>forceRefresh</code> 参数绕过缓存</li>
+                </ul>
+
+                <div class="code-header">TopicAPI.js - 缓存逻辑</div>
+                <pre><code>async getTopicInfo(topicId, forceRefresh = false) {
+  // 1. 尝试从缓存读取
+  if (!forceRefresh) {
+    const cached = await this.loadFromCache(topicId);
+    if (cached) {
+      console.log(`✓ 从缓存加载 Topic ${topicId}`);
+      return cached;
+    }
+  }
+
+  // 2. 从 API 获取
+  const url = `${this.baseUrl}/${topicId}`;
+  const { stdout } = await execPromise(`curl -k -s "${url}"`);
+  const data = JSON.parse(stdout);
+  const topicInfo = this.parseTopicInfo(data);
+
+  // 3. 保存到缓存
+  await this.saveToCache(topicId, topicInfo);
+
+  return topicInfo;
+}</code></pre>
+
+                <h4>缓存文件结构</h4>
+                <div class="code-header">.cache/topics/topic_123.json</div>
+                <pre><code>{
+  "timestamp": 1703001234567,
+  "topicId": "123",
+  "data": {
+    "topicId": 123,
+    "title": "Will BTC reach $100k by 2024?",
+    "status": 1,
+    "chainId": "56",
+    "questionId": "0x1234...abcd",
+    "yesToken": "12345",
+    "noToken": "12346",
+    "yesPrice": "0.650",
+    "noPrice": "0.350",
+    "volume": "50000.00",
+    "totalPrice": "75000.00",
+    "cutoffTime": 1735689600,
+    "raw": { /* 完整 API 响应 */ }
+  }
+}</code></pre>
+            </section>
+
+            <!-- 完整源码 -->
+            <section id="source-code">
+                <h2>4. 完整源码</h2>
+
+                <h3>4.1 constants.js - 常量配置</h3>
+                <div class="code-header">src/sdk/constants.js</div>
+                <pre><code>/**
+ * Opinion Trade SDK Constants
+ */
+
+// Chain configuration
+export const CHAIN_ID = 56; // BSC
+
+// Contract addresses
+export const EXCHANGE_ADDRESS = '0x5F45344126D6488025B0b84A3A8189F2487a7246';
+export const COLLATERAL_TOKEN_ADDRESS = '0x55d398326f99059fF775485246999027B3197955'; // USDT
+
+// Token configuration
+export const COLLATERAL_TOKEN_DECIMAL = 18;
+
+// API configuration
+export const API_BASE_URL = 'https://proxy.opinion.trade:8443/api/bsc/api';
+export const API_ENDPOINTS = {
+  SUBMIT_ORDER: '/v2/order',
+  QUERY_ORDERS: '/v2/order'
+};
+
+// EIP-712 Domain
+export const EIP712_DOMAIN = {
+  name: 'OPINION CTF Exchange',
+  version: '1',
+  chainId: CHAIN_ID.toString(),
+  verifyingContract: EXCHANGE_ADDRESS.toLowerCase()
+};
+
+// EIP-712 Types
+export const EIP712_TYPES = {
+  Order: [
+    { name: 'salt', type: 'uint256' },
+    { name: 'maker', type: 'address' },
+    { name: 'signer', type: 'address' },
+    { name: 'taker', type: 'address' },
+    { name: 'tokenId', type: 'uint256' },
+    { name: 'makerAmount', type: 'uint256' },
+    { name: 'takerAmount', type: 'uint256' },
+    { name: 'expiration', type: 'uint256' },
+    { name: 'nonce', type: 'uint256' },
+    { name: 'feeRateBps', type: 'uint256' },
+    { name: 'side', type: 'uint8' },
+    { name: 'signatureType', type: 'uint8' }
+  ]
+};
+
+// Order side
+export const Side = {
+  BUY: 0,
+  SELL: 1
+};
+
+// Signature type
+export const SignatureType = {
+  POLY_GNOSIS_SAFE: 2
+};
+
+// Market type
+export const MarketType = {
+  MARKET: 'Market',
+  LIMIT: 'Limit'
+};
+
+// Trading method for API
+export const TradingMethod = {
+  MARKET: 1,
+  LIMIT: 2
+};
+
+// Volume type
+export const VolumeType = {
+  SHARES: 'Shares',
+  AMOUNT: 'Amount'
+};
+
+// Yes/No position
+export const YesOrNo = {
+  YES: 1,
+  NO: 2
+};
+
+// Zero address
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+// Order query types
+export const OrderQueryType = {
+  OPEN: 1,      // 未完成订单
+  CLOSED: 2     // 已完成/取消订单
+};
+
+// Order status
+export const OrderStatus = {
+  OPEN: 1,         // 未完成
+  FILLED: 2,       // 已完成
+  CANCELLED: 3     // 已取消
+};</code></pre>
+
+                <h3>4.2 utils.js - 工具函数</h3>
+                <div class="code-header">src/sdk/utils.js</div>
+                <pre><code>import { ethers } from 'ethers';
+import { COLLATERAL_TOKEN_DECIMAL } from './constants.js';
+
+/**
+ * Convert human-readable amount to wei format
+ */
+export function toWei(amount, decimals = COLLATERAL_TOKEN_DECIMAL) {
+  try {
+    return ethers.parseUnits(amount.toString(), decimals).toString();
+  } catch (error) {
+    throw new Error(`Failed to convert amount to wei: ${error.message}`);
+  }
+}
+
+/**
+ * Convert wei format to human-readable amount
+ */
+export function fromWei(wei, decimals = COLLATERAL_TOKEN_DECIMAL) {
+  try {
+    return ethers.formatUnits(wei.toString(), decimals);
+  } catch (error) {
+    throw new Error(`Failed to convert wei to amount: ${error.message}`);
+  }
+}
+
+/**
+ * Generate order salt (timestamp in milliseconds)
+ */
+export function generateSalt() {
+  return Date.now().toString();
+}
+
+/**
+ * Calculate amount using high-precision BigInt arithmetic
+ * Calculates: shares * price / 100 with proper rounding
+ */
+function calculateAmountWithBigInt(shares, price) {
+  const sharesParts = shares.toString().split('.');
+  const sharesInt = sharesParts[0] || '0';
+  const sharesDec = sharesParts[1] || '';
+
+  const priceParts = price.toString().split('.');
+  const priceInt = priceParts[0] || '0';
+  const priceDec = priceParts[1] || '';
+
+  const sharesDecPlaces = sharesDec.length;
+  const priceDecPlaces = priceDec.length;
+  const totalDecPlaces = sharesDecPlaces + priceDecPlaces;
+
+  const sharesBigInt = BigInt(sharesInt + sharesDec.padEnd(sharesDecPlaces, '0'));
+  const priceBigInt = BigInt(priceInt + priceDec.padEnd(priceDecPlaces, '0'));
+
+  const product = sharesBigInt * priceBigInt;
+
+  const divisor = BigInt(100) * (10n ** BigInt(totalDecPlaces));
+  const resultScaled = (product * (10n ** 18n)) / divisor;
+
+  const resultStr = resultScaled.toString().padStart(19, '0');
+  const resultInt = resultStr.slice(0, -18) || '0';
+  const resultDec = resultStr.slice(-18);
+
+  const trimmedDec = resultDec.replace(/0+$/, '');
+
+  if (trimmedDec === '') {
+    return resultInt;
+  }
+  return resultInt + '.' + trimmedDec;
+}
+
+/**
+ * Calculate makerAmount and takerAmount based on order parameters
+ */
+export function calculateOrderAmounts(params) {
+  const { side, shares, limitPrice, volumeType, buyInputVal, isStableCoin } = params;
+
+  const price = isStableCoin ? limitPrice : String(100 * Number(limitPrice));
+
+  let amount;
+
+  if (volumeType === 'Shares') {
+    amount = calculateAmountWithBigInt(shares, price);
+  } else {
+    amount = buyInputVal;
+  }
+
+  let makerAmount, takerAmount;
+
+  if (side === 0) { // BUY
+    makerAmount = toWei(amount);
+    takerAmount = toWei(shares);
+  } else { // SELL
+    makerAmount = toWei(shares);
+    takerAmount = toWei(amount);
+  }
+
+  return {
+    makerAmount,
+    takerAmount
+  };
+}
+
+/**
+ * Encode Gnosis Safe signature
+ */
+export function encodeGnosisSafeSignature(signer, signature) {
+  const cleanSignature = signature.startsWith('0x') ? signature.slice(2) : signature;
+  const cleanSigner = signer.toLowerCase().startsWith('0x') ? signer.slice(2) : signer;
+
+  return '0x' + cleanSigner.toLowerCase() + cleanSignature;
+}
+
+/**
+ * Validate Ethereum address
+ */
+export function isValidAddress(address) {
+  return ethers.isAddress(address);
+}
+
+/**
+ * Normalize address to lowercase with 0x prefix
+ */
+export function normalizeAddress(address) {
+  if (!isValidAddress(address)) {
+    throw new Error(`Invalid address: ${address}`);
+  }
+  return address.toLowerCase();
+}
+
+/**
+ * Get current timestamp in seconds
+ */
+export function getCurrentTimestamp() {
+  return Math.round(Date.now() / 1000);
+}</code></pre>
+
+                <h3>4.3 signer.js - 签名模块</h3>
+                <div class="code-header">src/sdk/signer.js</div>
+                <pre><code>import { ethers } from 'ethers';
+import {
+  EIP712_DOMAIN,
+  EIP712_TYPES,
+  SignatureType,
+  ZERO_ADDRESS
+} from './constants.js';
+import { generateSalt } from './utils.js';
+
+/**
+ * Create an order object for signing
+ */
+export function createOrder(params) {
+  const {
+    maker,
+    signer,
+    tokenId,
+    makerAmount,
+    takerAmount,
+    side,
+    expiration = '0',
+    feeRateBps = '0'
+  } = params;
+
+  const salt = generateSalt();
+
+  const order = {
+    salt,
+    maker: maker.toLowerCase(),
+    signer: signer.toLowerCase(),
+    taker: ZERO_ADDRESS,
+    tokenId,
+    makerAmount,
+    takerAmount,
+    expiration,
+    nonce: '0',
+    feeRateBps,
+    side,
+    signatureType: SignatureType.POLY_GNOSIS_SAFE
+  };
+
+  return order;
+}
+
+/**
+ * Sign an order using EIP-712
+ */
+export async function signOrder(wallet, order) {
+  try {
+    const signature = await wallet.signTypedData(
+      EIP712_DOMAIN,
+      { Order: EIP712_TYPES.Order },
+      order
+    );
+
+    return {
+      ...order,
+      signature
+    };
+  } catch (error) {
+    throw new Error(`Failed to sign order: ${error.message}`);
+  }
+}
+
+/**
+ * Build and sign a complete order
+ */
+export async function buildSignedOrder(wallet, orderParams) {
+  const order = createOrder(orderParams);
+  const signedOrder = await signOrder(wallet, order);
+
+  return signedOrder;
+}</code></pre>
+
+                <h3>4.4 orderBuilder.js - 订单构建</h3>
+                <div class="code-header">src/sdk/orderBuilder.js</div>
+                <pre><code>import { Side, VolumeType } from './constants.js';
+import { calculateOrderAmounts } from './utils.js';
+
+/**
+ * Build order parameters for signing
+ */
+export function buildOrderParams(params) {
+  const {
+    maker,
+    signer,
+    tokenId,
+    limitPrice,
+    shares,
+    side,
+    volumeType = VolumeType.SHARES,
+    buyInputVal = '0',
+    isStableCoin = true,
+    expiration = '0',
+    feeRateBps = '0'
+  } = params;
+
+  if (!maker || !signer || !tokenId || !limitPrice || !shares) {
+    throw new Error('Missing required parameters: maker, signer, tokenId, limitPrice, shares');
+  }
+
+  if (side !== Side.BUY && side !== Side.SELL) {
+    throw new Error(`Invalid side: ${side}. Must be ${Side.BUY} (BUY) or ${Side.SELL} (SELL)`);
+  }
+
+  const price = parseFloat(limitPrice);
+  if (isNaN(price) || price < 0 || price > 100) {
+    throw new Error('Limit price must be between 0 and 100');
+  }
+
+  const { makerAmount, takerAmount } = calculateOrderAmounts({
+    side,
+    shares,
+    limitPrice,
+    volumeType,
+    buyInputVal,
+    isStableCoin
+  });
+
+  const orderParams = {
+    maker,
+    signer,
+    tokenId,
+    makerAmount,
+    takerAmount,
+    side,
+    expiration,
+    feeRateBps
+  };
+
+  return orderParams;
+}
+
+/**
+ * Convert price to API format using high-precision BigInt arithmetic
+ */
+function formatPriceWithBigInt(limitPrice) {
+  const parts = limitPrice.toString().split('.');
+  const integerPart = parts[0] || '0';
+  const decimalPart = (parts[1] || '0').padEnd(2, '0');
+
+  const fullInteger = integerPart + decimalPart;
+  const bigIntValue = BigInt(fullInteger);
+
+  const resultTimes1000 = bigIntValue * 1000n / 10000n;
+
+  const resultStr = resultTimes1000.toString().padStart(4, '0');
+  const resultInt = resultStr.slice(0, -3) || '0';
+  const resultDec = resultStr.slice(-3);
+
+  return resultInt + '.' + resultDec;
+}
+
+/**
+ * Build API request payload for submitting order
+ */
+export function buildApiPayload(params) {
+  const {
+    signedOrder,
+    topicId,
+    limitPrice,
+    collateralTokenAddr,
+    chainId,
+    isStableCoin = true,
+    safeRate = '0'
+  } = params;
+
+  const apiPrice = isStableCoin
+    ? formatPriceWithBigInt(limitPrice)
+    : limitPrice;
+
+  const payload = {
+    topicId: parseInt(topicId),
+    contractAddress: '',
+    price: apiPrice,
+    tradingMethod: 2,
+    salt: signedOrder.salt,
+    maker: signedOrder.maker,
+    signer: signedOrder.signer,
+    taker: signedOrder.taker,
+    tokenId: signedOrder.tokenId,
+    makerAmount: signedOrder.makerAmount,
+    takerAmount: signedOrder.takerAmount,
+    expiration: signedOrder.expiration,
+    nonce: signedOrder.nonce,
+    feeRateBps: signedOrder.feeRateBps,
+    side: String(signedOrder.side),
+    signatureType: String(signedOrder.signatureType),
+    signature: signedOrder.signature,
+    timestamp: Math.round(Date.now() / 1000),
+    sign: signedOrder.signature,
+    safeRate,
+    orderExpTime: signedOrder.expiration,
+    currencyAddress: collateralTokenAddr,
+    chainId
+  };
+
+  return payload;
+}</code></pre>
+
+                <h3>4.5 TopicAPI.js - Topic 管理</h3>
+                <div class="code-header">src/sdk/TopicAPI.js (部分代码)</div>
+                <pre><code>import { exec } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs/promises';
+import path from 'path';
+
+const execPromise = promisify(exec);
+
+export class TopicAPI {
+  constructor(cacheDir = '.cache/topics') {
+    this.baseUrl = 'https://proxy.opinion.trade:8443/api/bsc/api/v2/topic';
+    this.cacheDir = cacheDir;
+  }
+
+  async getTopicInfo(topicId, forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = await this.loadFromCache(topicId);
+      if (cached) {
+        console.log(`✓ 从缓存加载 Topic ${topicId}`);
+        return cached;
+      }
+    }
+
+    const url = `${this.baseUrl}/${topicId}`;
+    const { stdout } = await execPromise(`curl -k -s "${url}"`);
+    const data = JSON.parse(stdout);
+    const topicInfo = this.parseTopicInfo(data);
+
+    await this.saveToCache(topicId, topicInfo);
+
+    return topicInfo;
+  }
+
+  parseTopicInfo(data) {
+    const result = data.result || data.data || data;
+    const topicData = result.data;
+
+    return {
+      topicId: topicData.topicId,
+      title: topicData.title,
+      status: topicData.status,
+      chainId: topicData.chainId,
+      questionId: topicData.questionId,
+      yesToken: topicData.yesPos,
+      noToken: topicData.noPos,
+      yesPrice: topicData.yesMarketPrice,
+      noPrice: topicData.noMarketPrice,
+      volume: topicData.volume,
+      totalPrice: topicData.totalPrice,
+      cutoffTime: topicData.cutoffTime,
+      raw: topicData
+    };
+  }
+
+  async loadFromCache(topicId) {
+    try {
+      const cachePath = this.getCachePath(topicId);
+      const content = await fs.readFile(cachePath, 'utf-8');
+      const cached = JSON.parse(content);
+
+      const cacheAge = Date.now() - cached.timestamp;
+      const maxAge = 24 * 60 * 60 * 1000; // 24小时
+
+      if (cacheAge < maxAge) {
+        return cached.data;
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async saveToCache(topicId, data) {
+    await this.ensureCacheDir();
+    const cachePath = this.getCachePath(topicId);
+    const cached = {
+      timestamp: Date.now(),
+      topicId: topicId,
+      data: data
+    };
+    await fs.writeFile(cachePath, JSON.stringify(cached, null, 2), 'utf-8');
+  }
+}</code></pre>
+
+                <h3>4.6 OpinionTradeSDK.js - 主 SDK</h3>
+                <div class="code-header">src/sdk/OpinionTradeSDK.js (核心方法)</div>
+                <pre><code>import { ethers } from 'ethers';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { Side, VolumeType, OrderQueryType } from './constants.js';
+import { buildSignedOrder } from './signer.js';
+import { buildOrderParams, buildApiPayload } from './orderBuilder.js';
+import { TopicAPI } from './TopicAPI.js';
+
+const execPromise = promisify(exec);
+
+export class OpinionTradeSDK {
+  constructor(config) {
+    const {
+      privateKey,
+      makerAddress,
+      authorizationToken,
+      collateralTokenAddr = COLLATERAL_TOKEN_ADDRESS,
+      chainId = CHAIN_ID,
+      apiBaseUrl = API_BASE_URL
+    } = config;
+
+    if (!privateKey || !makerAddress) {
+      throw new Error('Private key and maker address are required');
+    }
+
+    this.wallet = new ethers.Wallet(privateKey);
+    this.signerAddress = this.wallet.address;
+    this.makerAddress = makerAddress.toLowerCase();
+    this.collateralTokenAddr = collateralTokenAddr.toLowerCase();
+    this.chainId = chainId;
+    this.apiBaseUrl = apiBaseUrl;
+    this.authorizationToken = authorizationToken;
+    this.topicAPI = new TopicAPI();
+  }
+
+  /**
+   * Create and submit a limit order
+   */
+  async createLimitOrder(params) {
+    const {
+      topicId,
+      tokenId,
+      limitPrice,
+      shares,
+      side,
+      volumeType = VolumeType.SHARES,
+      buyInputVal = '0',
+      isStableCoin = true,
+      safeRate = '0'
+    } = params;
+
+    // 1. Build order parameters
+    const orderParams = buildOrderParams({
+      maker: this.makerAddress,
+      signer: this.signerAddress,
+      tokenId,
+      limitPrice,
+      shares,
+      side,
+      volumeType,
+      buyInputVal,
+      isStableCoin
+    });
+
+    // 2. Sign the order
+    const signedOrder = await buildSignedOrder(this.wallet, orderParams);
+
+    // 3. Build API payload
+    const apiPayload = buildApiPayload({
+      signedOrder,
+      topicId,
+      limitPrice,
+      collateralTokenAddr: this.collateralTokenAddr,
+      chainId: this.chainId,
+      isStableCoin,
+      safeRate
+    });
+
+    // 4. Submit order to API
+    const response = await this.submitOrder(apiPayload);
+
+    return response;
+  }
+
+  /**
+   * Create order by topic (auto-fetch token IDs)
+   */
+  async createOrderByTopic(params) {
+    const { topicId, position, ...restParams } = params;
+
+    const positionUpper = position.toUpperCase();
+    if (positionUpper !== 'YES' && positionUpper !== 'NO') {
+      throw new Error('Position must be "YES" or "NO"');
+    }
+
+    const topicInfo = await this.getTopicInfo(topicId);
+    const tokenId = positionUpper === 'YES' ? topicInfo.yesToken : topicInfo.noToken;
+
+    if (!tokenId) {
+      throw new Error(`${positionUpper} token ID not found for topic ${topicId}`);
+    }
+
+    return await this.createLimitOrder({
+      topicId,
+      tokenId,
+      ...restParams
+    });
+  }
+
+  /**
+   * Helper: BUY by topic
+   */
+  async buyByTopic(params) {
+    return this.createOrderByTopic({
+      ...params,
+      side: Side.BUY
+    });
+  }
+
+  /**
+   * Helper: SELL by topic
+   */
+  async sellByTopic(params) {
+    return this.createOrderByTopic({
+      ...params,
+      side: Side.SELL
+    });
+  }
+
+  /**
+   * Query orders
+   */
+  async queryOrders(params) {
+    const {
+      walletAddress,
+      queryType,
+      topicId,
+      page = 1,
+      limit = 10
+    } = params;
+
+    if (!walletAddress) {
+      throw new Error('walletAddress is required');
+    }
+
+    if (!queryType || (queryType !== OrderQueryType.OPEN && queryType !== OrderQueryType.CLOSED)) {
+      throw new Error('queryType must be 1 (OPEN) or 2 (CLOSED)');
+    }
+
+    let url = `${this.apiBaseUrl}${API_ENDPOINTS.QUERY_ORDERS}?page=${page}&limit=${limit}&walletAddress=${walletAddress}&queryType=${queryType}`;
+
+    if (topicId) {
+      url += `&topicId=${topicId}`;
+    }
+
+    let curlCommand = `curl -k -s -X GET "${url}" -H "Content-Type: application/json"`;
+
+    if (this.authorizationToken) {
+      const token = this.authorizationToken.startsWith('Bearer ')
+        ? this.authorizationToken
+        : `Bearer ${this.authorizationToken}`;
+      curlCommand += ` -H "Authorization: ${token}"`;
+    }
+
+    const { stdout } = await execPromise(curlCommand);
+    const responseData = JSON.parse(stdout);
+
+    if (responseData.errno !== undefined && responseData.errno !== 0) {
+      throw new Error(`API error: ${responseData.errmsg || 'Unknown error'}`);
+    }
+
+    return responseData.result;
+  }
+
+  /**
+   * Get open orders
+   */
+  async getOpenOrders(params = {}) {
+    const walletAddress = params.walletAddress || this.makerAddress;
+    return this.queryOrders({
+      ...params,
+      walletAddress,
+      queryType: OrderQueryType.OPEN
+    });
+  }
+
+  /**
+   * Get closed orders
+   */
+  async getClosedOrders(params = {}) {
+    const walletAddress = params.walletAddress || this.makerAddress;
+    return this.queryOrders({
+      ...params,
+      walletAddress,
+      queryType: OrderQueryType.CLOSED
+    });
+  }
+}</code></pre>
+            </section>
+
+            <!-- 使用示例 -->
+            <section id="usage">
+                <h2>5. 使用示例</h2>
+
+                <h3>5.1 环境配置</h3>
+
+                <div class="code-header">.env 文件配置</div>
+                <pre><code># Gnosis Safe Owner 的私钥（用于签名）
+PRIVATE_KEY=0x1234567890abcdef...
+
+# Gnosis Safe 地址（订单的 maker）
+MAKER_ADDRESS=0xYourGnosisSafeAddress...
+
+# Authorization Token（从浏览器网络面板获取）
+AUTHORIZATION_TOKEN=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+
+                <div class="warning-box">
+                    <strong>安全提示：</strong>
+                    <ul>
+                        <li>永远不要提交 <code>.env</code> 文件到 Git</li>
+                        <li>私钥泄露会导致资产损失</li>
+                        <li>Authorization Token 会过期，需定期更新</li>
+                    </ul>
+                </div>
+
+                <h3>5.2 初始化 SDK</h3>
+
+                <div class="code-header">示例: 初始化</div>
+                <pre><code>import 'dotenv/config';
+import { OpinionTradeSDK } from './src/sdk/OpinionTradeSDK.js';
+
+// 验证环境变量
+if (!process.env.PRIVATE_KEY || !process.env.MAKER_ADDRESS || !process.env.AUTHORIZATION_TOKEN) {
+  console.error('❌ Missing required environment variables');
+  process.exit(1);
+}
+
+// 创建 SDK 实例
+const sdk = new OpinionTradeSDK({
+  privateKey: process.env.PRIVATE_KEY,
+  makerAddress: process.env.MAKER_ADDRESS,
+  authorizationToken: process.env.AUTHORIZATION_TOKEN
+});
+
+console.log('SDK initialized');
+console.log('Signer Address:', sdk.getSignerAddress());
+console.log('Maker Address:', sdk.getMakerAddress());</code></pre>
+
+                <h3>5.3 创建限价订单（方式一：指定 tokenId）</h3>
+
+                <div class="code-header">示例: 直接指定 tokenId 创建订单</div>
+                <pre><code>import { Side } from './src/sdk/constants.js';
+
+async function placeOrderByTokenId() {
+  try {
+    const response = await sdk.createLimitOrder({
+      topicId: '123',              // Topic ID
+      tokenId: '12345',            // YES/NO Token ID
+      limitPrice: '99.1',          // 价格 0-100（最多1位小数）
+      shares: '10',                // 购买数量
+      side: Side.BUY               // BUY(0) 或 SELL(1)
+    });
+
+    console.log('✅ Order created successfully');
+    console.log('Order ID:', response.result.orderId);
+  } catch (error) {
+    console.error('❌ Failed to create order:', error.message);
+  }
+}
+
+placeOrderByTokenId();</code></pre>
+
+                <h3>5.4 创建限价订单（方式二：通过 Topic + Position）</h3>
+
+                <div class="code-header">示例: 自动获取 tokenId 创建订单（推荐）</div>
+                <pre><code>async function placeOrderByTopic() {
+  try {
+    // SDK 会自动获取 topic 信息并找到对应的 tokenId
+    const response = await sdk.buyByTopic({
+      topicId: '123',
+      position: 'YES',     // "YES" 或 "NO"
+      limitPrice: '99.1',
+      shares: '10'
+    });
+
+    console.log('✅ BUY YES order created');
+    console.log('Order ID:', response.result.orderId);
+  } catch (error) {
+    console.error('❌ Failed:', error.message);
+  }
+}
+
+placeOrderByTopic();</code></pre>
+
+                <h3>5.5 卖出订单示例</h3>
+
+                <div class="code-header">示例: SELL 订单</div>
+                <pre><code>async function sellShares() {
+  try {
+    const response = await sdk.sellByTopic({
+      topicId: '123',
+      position: 'NO',      // 卖出 NO position
+      limitPrice: '45.5',  // 价格 45.5%
+      shares: '20'         // 卖出 20 shares
+    });
+
+    console.log('✅ SELL NO order created');
+    console.log('Order ID:', response.result.orderId);
+  } catch (error) {
+    console.error('❌ Failed:', error.message);
+  }
+}
+
+sellShares();</code></pre>
+
+                <h3>5.6 查询订单</h3>
+
+                <div class="code-header">示例: 查询未完成订单</div>
+                <pre><code>async function queryMyOrders() {
+  try {
+    // 查询未完成订单（默认查询 maker address）
+    const openOrders = await sdk.getOpenOrders({
+      page: 1,
+      limit: 10
+    });
+
+    console.log(`找到 ${openOrders.total} 个未完成订单`);
+
+    openOrders.list.forEach(order => {
+      console.log(`
+订单 ID: ${order.orderId}
+Topic: ${order.topicTitle}
+Position: ${order.outcome}
+Price: ${order.price}
+Amount: ${order.amount}
+Filled: ${order.filled}
+Status: ${order.status === 1 ? 'OPEN' : 'OTHER'}
+      `);
+    });
+  } catch (error) {
+    console.error('❌ Query failed:', error.message);
+  }
+}
+
+queryMyOrders();</code></pre>
+
+                <div class="code-header">示例: 查询特定 Topic 的订单</div>
+                <pre><code>async function queryTopicOrders() {
+  try {
+    // 查询特定 topic 的已完成订单
+    const closedOrders = await sdk.getClosedOrders({
+      topicId: '123',
+      page: 1,
+      limit: 20
+    });
+
+    console.log(`Topic 123 有 ${closedOrders.total} 个已完成订单`);
+  } catch (error) {
+    console.error('❌ Query failed:', error.message);
+  }
+}
+
+queryTopicOrders();</code></pre>
+
+                <h3>5.7 Topic 信息查询和缓存管理</h3>
+
+                <div class="code-header">示例: Topic 信息操作</div>
+                <pre><code>async function topicOperations() {
+  // 获取 topic 信息（会自动缓存）
+  const topicInfo = await sdk.getTopicInfo('123');
+  console.log('Topic Title:', topicInfo.title);
+  console.log('YES Token:', topicInfo.yesToken);
+  console.log('NO Token:', topicInfo.noToken);
+  console.log('YES Price:', topicInfo.yesPrice);
+  console.log('NO Price:', topicInfo.noPrice);
+
+  // 强制刷新（忽略缓存）
+  const freshInfo = await sdk.getTopicInfo('123', true);
+
+  // 列出所有缓存的 topics
+  const cached = await sdk.listCachedTopics();
+  console.log('缓存的 Topics:', cached);
+
+  // 清除特定 topic 的缓存
+  await sdk.clearTopicCache('123');
+
+  // 清除所有缓存
+  await sdk.clearTopicCache();
+}
+
+topicOperations();</code></pre>
+
+                <h3>5.8 完整的订单创建示例</h3>
+
+                <div class="code-header">place_order.js - 完整示例</div>
+                <pre><code>import 'dotenv/config';
+import { OpinionTradeSDK } from './src/sdk/OpinionTradeSDK.js';
+
+async function main() {
+  // 验证环境变量
+  if (!process.env.PRIVATE_KEY || !process.env.MAKER_ADDRESS || !process.env.AUTHORIZATION_TOKEN) {
+    console.error('❌ 缺少必需的环境变量');
+    console.log('请在 .env 文件中配置:');
+    console.log('  PRIVATE_KEY=你的私钥');
+    console.log('  MAKER_ADDRESS=你的Gnosis Safe地址');
+    console.log('  AUTHORIZATION_TOKEN=Bearer token');
+    process.exit(1);
+  }
+
+  // 创建 SDK 实例
+  const sdk = new OpinionTradeSDK({
+    privateKey: process.env.PRIVATE_KEY,
+    makerAddress: process.env.MAKER_ADDRESS,
+    authorizationToken: process.env.AUTHORIZATION_TOKEN
+  });
+
+  console.log('='.repeat(60));
+  console.log('Opinion Trade SDK - 创建订单示例');
+  console.log('='.repeat(60));
+  console.log('Signer:', sdk.getSignerAddress());
+  console.log('Maker:', sdk.getMakerAddress());
+  console.log();
+
+  try {
+    // 订单参数
+    const topicId = '123';         // 替换为实际的 topic ID
+    const position = 'YES';        // YES 或 NO
+    const limitPrice = '99.1';     // 价格 0-100
+    const shares = '10';           // 数量
+
+    console.log('订单参数:');
+    console.log(`  Topic ID: ${topicId}`);
+    console.log(`  Position: ${position}`);
+    console.log(`  Price: ${limitPrice}%`);
+    console.log(`  Shares: ${shares}`);
+    console.log();
+
+    // 创建订单
+    console.log('开始创建订单...');
+    const response = await sdk.buyByTopic({
+      topicId,
+      position,
+      limitPrice,
+      shares
+    });
+
+    console.log();
+    console.log('✅ 订单创建成功!');
+    console.log('订单详情:', JSON.stringify(response.result, null, 2));
+  } catch (error) {
+    console.error();
+    console.error('❌ 订单创建失败:', error.message);
+    process.exit(1);
+  }
+}
+
+main();</code></pre>
+            </section>
+
+            <!-- API 参考 -->
+            <section id="api">
+                <h2>6. API 参考</h2>
+
+                <h3>6.1 OpinionTradeSDK 构造函数</h3>
+
+                <div class="code-header">构造函数参数</div>
+                <pre><code>new OpinionTradeSDK({
+  privateKey: string,           // 必需: Gnosis Safe owner 的私钥
+  makerAddress: string,         // 必需: Gnosis Safe 地址
+  authorizationToken: string,   // 必需: JWT Bearer token
+  collateralTokenAddr?: string, // 可选: Collateral token 地址（默认 USDT）
+  chainId?: number,             // 可选: Chain ID（默认 56）
+  apiBaseUrl?: string           // 可选: API base URL
+})</code></pre>
+
+                <h3>6.2 订单创建方法</h3>
+
+                <h4>createLimitOrder(params)</h4>
+                <p>创建限价订单（需要指定 tokenId）</p>
+                <table>
+                    <tr>
+                        <th>参数</th>
+                        <th>类型</th>
+                        <th>必需</th>
+                        <th>说明</th>
+                    </tr>
+                    <tr>
+                        <td>topicId</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>Topic ID</td>
+                    </tr>
+                    <tr>
+                        <td>tokenId</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>Token ID (YES/NO position)</td>
+                    </tr>
+                    <tr>
+                        <td>limitPrice</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>限价 0-100（最多1位小数）</td>
+                    </tr>
+                    <tr>
+                        <td>shares</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>数量</td>
+                    </tr>
+                    <tr>
+                        <td>side</td>
+                        <td>number</td>
+                        <td>是</td>
+                        <td>0=BUY, 1=SELL</td>
+                    </tr>
+                    <tr>
+                        <td>volumeType</td>
+                        <td>string</td>
+                        <td>否</td>
+                        <td>"Shares" 或 "Amount"（默认 Shares）</td>
+                    </tr>
+                </table>
+
+                <h4>createOrderByTopic(params)</h4>
+                <p>通过 Topic + Position 创建订单（自动获取 tokenId）</p>
+                <table>
+                    <tr>
+                        <th>参数</th>
+                        <th>类型</th>
+                        <th>必需</th>
+                        <th>说明</th>
+                    </tr>
+                    <tr>
+                        <td>topicId</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>Topic ID</td>
+                    </tr>
+                    <tr>
+                        <td>position</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>"YES" 或 "NO"</td>
+                    </tr>
+                    <tr>
+                        <td>limitPrice</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>限价 0-100</td>
+                    </tr>
+                    <tr>
+                        <td>shares</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>数量</td>
+                    </tr>
+                    <tr>
+                        <td>side</td>
+                        <td>number</td>
+                        <td>是</td>
+                        <td>0=BUY, 1=SELL</td>
+                    </tr>
+                </table>
+
+                <h4>buyByTopic(params) / sellByTopic(params)</h4>
+                <p>便捷方法，自动设置 side 参数</p>
+                <div class="code-header">示例</div>
+                <pre><code>// BUY
+await sdk.buyByTopic({
+  topicId: '123',
+  position: 'YES',
+  limitPrice: '99.1',
+  shares: '10'
+});
+
+// SELL
+await sdk.sellByTopic({
+  topicId: '123',
+  position: 'NO',
+  limitPrice: '45.5',
+  shares: '20'
+});</code></pre>
+
+                <h3>6.3 订单查询方法</h3>
+
+                <h4>queryOrders(params)</h4>
+                <p>查询订单（完整参数版本）</p>
+                <table>
+                    <tr>
+                        <th>参数</th>
+                        <th>类型</th>
+                        <th>必需</th>
+                        <th>说明</th>
+                    </tr>
+                    <tr>
+                        <td>walletAddress</td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>钱包地址</td>
+                    </tr>
+                    <tr>
+                        <td>queryType</td>
+                        <td>number</td>
+                        <td>是</td>
+                        <td>1=OPEN, 2=CLOSED</td>
+                    </tr>
+                    <tr>
+                        <td>topicId</td>
+                        <td>string</td>
+                        <td>否</td>
+                        <td>筛选特定 topic</td>
+                    </tr>
+                    <tr>
+                        <td>page</td>
+                        <td>number</td>
+                        <td>否</td>
+                        <td>页码（默认 1）</td>
+                    </tr>
+                    <tr>
+                        <td>limit</td>
+                        <td>number</td>
+                        <td>否</td>
+                        <td>每页数量（默认 10）</td>
+                    </tr>
+                </table>
+
+                <h4>getOpenOrders(params) / getClosedOrders(params)</h4>
+                <p>便捷方法，默认使用 maker address</p>
+                <div class="code-header">示例</div>
+                <pre><code>// 查询未完成订单
+const openOrders = await sdk.getOpenOrders({ page: 1, limit: 10 });
+
+// 查询已完成订单
+const closedOrders = await sdk.getClosedOrders({ topicId: '123' });</code></pre>
+
+                <h4>订单查询响应结构</h4>
+                <div class="code-header">Response 结构</div>
+                <pre><code>{
+  list: [
+    {
+      orderId: 123456,
+      topicId: 123,
+      topicTitle: "Will BTC reach $100k?",
+      outcome: "YES",
+      outcomeSide: 1,              // 1=YES, 2=NO
+      price: "0.991000000000000000",
+      amount: "10000000000000000000",
+      filled: "5/10",              // 已成交/总量
+      status: 1,                   // 1=OPEN, 2=FILLED, 3=CANCELLED
+      side: 1,                     // 1=BUY, 2=SELL
+      totalPrice: "4955000000000000000",
+      createdAt: 1703001234,
+      chainId: "56",
+      currencyAddress: "0x55d398326f99059fF775485246999027B3197955",
+      transNo: "abc123..."
+    }
+  ],
+  total: 100
+}</code></pre>
+
+                <h3>6.4 Topic 信息方法</h3>
+
+                <h4>getTopicInfo(topicId, forceRefresh)</h4>
+                <p>获取 topic 信息（自动缓存）</p>
+                <div class="code-header">参数</div>
+                <pre><code>topicId: string | number         // Topic ID
+forceRefresh: boolean = false    // 是否强制刷新（忽略缓存）</code></pre>
+
+                <div class="code-header">返回值</div>
+                <pre><code>{
+  topicId: 123,
+  title: "Will BTC reach $100k?",
+  status: 1,
+  chainId: "56",
+  questionId: "0x1234...abcd",
+  yesToken: "12345",
+  noToken: "12346",
+  yesPrice: "0.650",
+  noPrice: "0.350",
+  volume: "50000.00",
+  totalPrice: "75000.00",
+  cutoffTime: 1735689600,
+  raw: { /* 完整 API 响应 */ }
+}</code></pre>
+
+                <h4>clearTopicCache(topicId)</h4>
+                <p>清除缓存</p>
+                <div class="code-header">示例</div>
+                <pre><code>// 清除特定 topic 缓存
+await sdk.clearTopicCache('123');
+
+// 清除所有缓存
+await sdk.clearTopicCache();</code></pre>
+
+                <h4>listCachedTopics()</h4>
+                <p>列出所有缓存的 topics</p>
+                <div class="code-header">示例</div>
+                <pre><code>const cached = await sdk.listCachedTopics();
+// [
+//   {
+//     topicId: '123',
+//     title: 'Will BTC reach $100k?',
+//     timestamp: '2024-12-20T10:30:00.000Z',
+//     age: 120  // 缓存年龄（分钟）
+//   }
+// ]</code></pre>
+
+                <h3>6.5 常量枚举</h3>
+
+                <div class="code-header">constants.js - 常用枚举</div>
+                <pre><code>import { Side, OrderQueryType, OrderStatus } from './src/sdk/constants.js';
+
+// 订单方向
+Side.BUY = 0
+Side.SELL = 1
+
+// 查询类型
+OrderQueryType.OPEN = 1      // 未完成订单
+OrderQueryType.CLOSED = 2    // 已完成/取消订单
+
+// 订单状态
+OrderStatus.OPEN = 1         // 未完成
+OrderStatus.FILLED = 2       // 已完成
+OrderStatus.CANCELLED = 3    // 已取消</code></pre>
+            </section>
+
+            <!-- 总结 -->
+            <section>
+                <h2>7. 总结</h2>
+
+                <div class="success-box">
+                    <h3>核心要点回顾</h3>
+                    <ul>
+                        <li><strong>EIP-712 签名：</strong>提供类型安全和跨链/跨合约保护</li>
+                        <li><strong>Gnosis Safe 集成：</strong>Owner 代表 Safe 地址签名订单</li>
+                        <li><strong>高精度计算：</strong>使用 BigInt 避免浮点数误差</li>
+                        <li><strong>智能缓存：</strong>Topic 信息本地缓存 24 小时</li>
+                        <li><strong>价格转换：</strong>用户价格 (0-100) ↔ API 价格 (0.000-1.000)</li>
+                        <li><strong>订单查询：</strong>支持未完成/已完成订单查询，可按 topic 筛选</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <h3>安全建议</h3>
+                    <ul>
+                        <li>永远不要泄露私钥和 .env 文件</li>
+                        <li>定期更新 Authorization Token（会过期）</li>
+                        <li>在生产环境中使用 Gnosis Safe 多签保护资产</li>
+                        <li>测试订单时使用小额资金</li>
+                        <li>验证所有订单参数（价格、数量）后再提交</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h3>常见问题</h3>
+                    <ul>
+                        <li><strong>签名失败？</strong>检查私钥格式和钱包余额</li>
+                        <li><strong>API 返回 401？</strong>Authorization Token 过期，需重新获取</li>
+                        <li><strong>订单提交失败？</strong>验证价格范围 (0-100) 和 topic 状态</li>
+                        <li><strong>缓存不更新？</strong>使用 <code>forceRefresh: true</code> 或清除缓存</li>
+                        <li><strong>精度问题？</strong>SDK 已使用 BigInt，确保输入为字符串</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>Opinion Trade SDK - 完整教程与源码</p>
+            <p>BSC Prediction Market - EIP-712 Signature Implementation</p>
+        </footer>
+    </div>
+</body>
+</html>
