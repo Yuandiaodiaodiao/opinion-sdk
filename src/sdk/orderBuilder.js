@@ -75,6 +75,38 @@ export function buildOrderParams(params) {
 }
 
 /**
+ * Convert price to API format using high-precision BigInt arithmetic
+ * Divides by 100 and rounds to 3 decimal places
+ *
+ * @param {string} limitPrice - Price string (0-100, max 1 decimal)
+ * @returns {string} Price formatted to 3 decimals (e.g., "99.11" -> "0.991")
+ */
+function formatPriceWithBigInt(limitPrice) {
+  // Parse the price string to avoid floating point errors
+  const parts = limitPrice.toString().split('.');
+  const integerPart = parts[0] || '0';
+  const decimalPart = (parts[1] || '0').padEnd(2, '0'); // Ensure at least 2 decimal places
+
+  // Build integer representation (multiply by 100)
+  const fullInteger = integerPart + decimalPart;
+  const bigIntValue = BigInt(fullInteger);
+
+  // Divide by 100 and maintain 3 decimal precision
+  // bigIntValue represents limitPrice * 100
+  // We want (limitPrice / 100) with 3 decimals = (bigIntValue / 100 / 100) with 3 decimals
+  // = bigIntValue / 10000 with 3 decimals
+  // = (bigIntValue * 1000) / 10000
+  const resultTimes1000 = bigIntValue * 1000n / 10000n;
+
+  // Convert to string with proper decimal placement
+  const resultStr = resultTimes1000.toString().padStart(4, '0');
+  const resultInt = resultStr.slice(0, -3) || '0';
+  const resultDec = resultStr.slice(-3);
+
+  return resultInt + '.' + resultDec;
+}
+
+/**
  * Build API request payload for submitting order
  * This corresponds to the W function in readme.md (lines 317-343)
  *
@@ -100,9 +132,9 @@ export function buildApiPayload(params) {
   } = params;
 
   // Calculate price for API (line 320 in readme)
-  // If stablecoin: price / 100, else: price as is
+  // If stablecoin: price / 100 rounded to 3 decimals, else: price as is
   const apiPrice = isStableCoin
-    ? (parseFloat(limitPrice) / 100).toString()
+    ? formatPriceWithBigInt(limitPrice)
     : limitPrice;
 
   // Build API payload (lines 322-342 in readme)

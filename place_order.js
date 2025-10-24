@@ -39,10 +39,10 @@ async function placeOrder() {
 
     // 订单参数
     const orderParams = {
-      topicId: '814',
-      position: 'NO',
+      topicId: '789',
+      position: 'YES',
       limitPrice: '99',    // 限价 0.99 (99%)
-      shares: '10.00'      // 10 shares
+      shares: '567.09'      // 10 shares
     };
 
     console.log('📋 订单信息:');

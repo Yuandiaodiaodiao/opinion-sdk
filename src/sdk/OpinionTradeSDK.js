@@ -143,7 +143,7 @@ export class OpinionTradeSDK {
         makerAmount: apiPayload.makerAmount,
         takerAmount: apiPayload.takerAmount
       }, null, 2));
-
+      console.log();
       // Step 4: Submit order to API
       const response = await this.submitOrder(apiPayload);
 
