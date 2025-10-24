@@ -38,6 +38,58 @@ export function generateSalt() {
 }
 
 /**
+ * Calculate amount using high-precision BigInt arithmetic
+ * Calculates: shares * price / 100 with proper rounding
+ *
+ * @param {string} shares - Number of shares (can have decimals)
+ * @param {string} price - Price value (0-100, can have decimals)
+ * @returns {string} Calculated amount with proper precision
+ */
+function calculateAmountWithBigInt(shares, price) {
+  // Parse shares to avoid floating point errors
+  const sharesParts = shares.toString().split('.');
+  const sharesInt = sharesParts[0] || '0';
+  const sharesDec = sharesParts[1] || '';
+
+  // Parse price
+  const priceParts = price.toString().split('.');
+  const priceInt = priceParts[0] || '0';
+  const priceDec = priceParts[1] || '';
+
+  // Calculate max decimal places
+  const sharesDecPlaces = sharesDec.length;
+  const priceDecPlaces = priceDec.length;
+  const totalDecPlaces = sharesDecPlaces + priceDecPlaces;
+
+  // Convert to BigInt by removing decimal points
+  const sharesBigInt = BigInt(sharesInt + sharesDec.padEnd(sharesDecPlaces, '0'));
+  const priceBigInt = BigInt(priceInt + priceDec.padEnd(priceDecPlaces, '0'));
+
+  // Multiply: shares * price
+  const product = sharesBigInt * priceBigInt;
+
+  // Divide by 100 and adjust for decimal places
+  // We need to divide by 100 * 10^totalDecPlaces, but keep appropriate precision
+  const divisor = BigInt(100) * (10n ** BigInt(totalDecPlaces));
+
+  // To maintain precision, multiply by 10^18 first, then divide
+  const resultScaled = (product * (10n ** 18n)) / divisor;
+
+  // Convert back to decimal string with 18 decimal places
+  const resultStr = resultScaled.toString().padStart(19, '0');
+  const resultInt = resultStr.slice(0, -18) || '0';
+  const resultDec = resultStr.slice(-18);
+
+  // Remove trailing zeros from decimal part
+  const trimmedDec = resultDec.replace(/0+$/, '');
+
+  if (trimmedDec === '') {
+    return resultInt;
+  }
+  return resultInt + '.' + trimmedDec;
+}
+
+/**
  * Calculate makerAmount and takerAmount based on order parameters
  * According to the code in readme.md (lines 76-90)
  *
@@ -60,9 +112,9 @@ export function calculateOrderAmounts(params) {
 
   // Calculate amount based on volume type (lines 78-83 in readme)
   if (volumeType === 'Shares') {
-    // Calculate amount from shares and price
+    // Calculate amount from shares and price using BigInt for precision
     // amount = shares * price / 100
-    amount = (Number(shares) * Number(price) / 100).toFixed(2);
+    amount = calculateAmountWithBigInt(shares, price);
   } else {
     // Use the buyInputVal directly
     amount = buyInputVal;

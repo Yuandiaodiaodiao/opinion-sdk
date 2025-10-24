@@ -41,7 +41,7 @@ async function placeOrder() {
     const orderParams = {
       topicId: '789',
       position: 'YES',
-      limitPrice: '99',    // 限价 0.99 (99%)
+      limitPrice: '92.9',    // 限价 0.99 (99%)
       shares: '567.09'      // 10 shares
     };
 
